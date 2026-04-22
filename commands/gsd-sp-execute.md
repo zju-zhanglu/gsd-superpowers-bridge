@@ -60,32 +60,45 @@ Phase: Parse `$ARGUMENTS` to extract phase number N (first positional token). Ig
    git diff --quiet --cached -- . || git stash push -m "pre-worktree auto-stash"
    ```
 
-3. **Create worktree**: Use git worktree isolation. Ensure `.worktrees/` exists, then create a fresh branch:
+3. **Load agent content**: Read the full content of `agents/sp-executor.md` into a variable BEFORE changing directories. The subagent needs this content, and it may not be accessible from inside the worktree:
+   ```bash
+   AGENT_PROMPT="$(cat agents/sp-executor.md)"
+   ```
+   Also read the phase spec from `.planning/` into a variable before `cd`.
+
+4. **Create worktree**: Use git worktree isolation. Ensure `.worktrees/` exists. If branch `phase-<N>` already exists (from a previous run), reuse it with `--force` to recreate the worktree:
    ```bash
    mkdir -p .worktrees
-   git worktree add .worktrees/phase-<N> -b phase-<N>
+   git worktree add .worktrees/phase-<N> -b phase-<N> 2>/dev/null || git worktree add .worktrees/phase-<N> phase-<N> --force
    cd .worktrees/phase-<N>
    ```
 
-4. **Spawn sp-executor agent**: Use the `Task` tool to dispatch a subagent. Load the full content of `agents/sp-executor.md` and pass it as the agent prompt along with the phase spec. Set a timeout of 30 minutes for the subagent. If the agent times out or returns BLOCKED status, report failure (step 5) and do not retry — the user must decide how to proceed.
+5. **Spawn sp-executor agent**: Use the `Task` tool to dispatch a subagent. Pass the agent content (from step 3) and the phase spec as inline prompt — do NOT reference relative file paths since the subagent runs in the worktree. Include the `--no-tdd` flag status: if present, add "TDD enforcement is disabled for this phase" to the prompt; otherwise, include the standard TDD rules. Set a timeout of 30 minutes for the subagent. If the agent times out or returns BLOCKED status, report failure (step 6) and do not retry — the user must decide how to proceed.
 
-5. **Wait for agent completion**: The agent returns:
+6. **Wait for agent completion**: The agent returns:
    - Committed code changes (with atomic commits per task)
    - Test results (pass/fail per test)
    - Overall verdict (pass/fail)
 
-6. **Verify results**:
+7. **Verify results**:
    - If VERDICT=PASS: Output success summary with test counts, commit list, and readiness for `/gsd-ship`
    - If VERDICT=FAIL: Output failure report with:
      - Which tests failed
      - Which tasks are incomplete
      - Recommended next steps (run `/gsd-sp-review` to identify issues, or re-execute with `--debug`)
 
-7. **Clean up worktree**: Record the original directory before step 2. After execution, return and remove the worktree. If the worktree has uncommitted changes (agent failed mid-task), stash them before removal:
-   ```bash
-   cd $ORIGINAL_DIR
-   git worktree remove .worktrees/phase-<N> --force || true
-   ```
+8. **Clean up worktree**:
+   - On VERDICT=PASS: Remove the worktree cleanly.
+     ```bash
+     cd $ORIGINAL_DIR
+     git worktree remove .worktrees/phase-<N>
+     ```
+   - On VERDICT=FAIL: Leave the worktree on disk so the user can inspect partial work. Report its path.
+     ```bash
+     cd $ORIGINAL_DIR
+     echo "Worktree preserved at: .worktrees/phase-<N>"
+     echo "Inspect partial commits: git -C .worktrees/phase-<N> log --oneline"
+     ```
 
 Flag behavior:
 - `--no-tdd`: Disable TDD enforcement. Default is TDD enforced.

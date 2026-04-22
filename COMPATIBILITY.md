@@ -1,10 +1,10 @@
 # Compatibility Matrix
 
-## Tested Versions
+## Target Versions
 
 | GSD Version | Superpowers Version | Bridge Version | Status |
 |-------------|-------------------|----------------|--------|
-| >= 1.0.0 | >= 5.0.0 | 0.1.0 | Tested |
+| >= 1.0.0 | >= 5.0.0 | 0.1.0 | Target |
 
 ## Dependency Notes
 

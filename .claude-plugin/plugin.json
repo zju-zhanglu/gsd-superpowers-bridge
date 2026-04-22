@@ -6,8 +6,8 @@
     "name": "张露",
     "email": "zhanglu@example.com"
   },
-  "homepage": "https://github.com/zhanglu/gsd-superpowers-bridge",
-  "repository": "https://github.com/zhanglu/gsd-superpowers-bridge",
+  "homepage": "https://github.com/gsd-superpowers-bridge/gsd-superpowers-bridge",
+  "repository": "https://github.com/gsd-superpowers-bridge/gsd-superpowers-bridge",
   "license": "MIT",
   "keywords": [
     "gsd",
