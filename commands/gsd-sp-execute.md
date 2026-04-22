@@ -54,32 +54,34 @@ Phase: Parse `$ARGUMENTS` to extract phase number N (first positional token). Ig
    - Verification criteria
    - Dependencies between tasks
 
-2. **Create worktree**: Use git worktree isolation. Ensure `.worktrees/` exists, then create a fresh branch:
+2. **Record context**: Store `$PWD` as `$ORIGINAL_DIR`. If the working tree has uncommitted changes, stash them before creating a worktree:
+   ```bash
+   export ORIGINAL_DIR="$PWD"
+   git diff --quiet --cached -- . || git stash push -m "pre-worktree auto-stash"
+   ```
+
+3. **Create worktree**: Use git worktree isolation. Ensure `.worktrees/` exists, then create a fresh branch:
    ```bash
    mkdir -p .worktrees
    git worktree add .worktrees/phase-<N> -b phase-<N>
    cd .worktrees/phase-<N>
    ```
 
-3. **Spawn sp-executor agent**: Dispatch the `sp-executor` agent (defined in `agents/sp-executor.md`) with:
-   - Phase spec as input
-   - TDD workflow enforced
-   - Systematic debugging on failure
-   - Verification-before-completion gate
+4. **Spawn sp-executor agent**: Use the `Task` tool to dispatch a subagent. Load the full content of `agents/sp-executor.md` and pass it as the agent prompt along with the phase spec. Set a timeout of 30 minutes for the subagent. If the agent times out or returns BLOCKED status, report failure (step 5) and do not retry — the user must decide how to proceed.
 
-4. **Wait for agent completion**: The agent returns:
+5. **Wait for agent completion**: The agent returns:
    - Committed code changes (with atomic commits per task)
    - Test results (pass/fail per test)
    - Overall verdict (pass/fail)
 
-5. **Verify results**:
+6. **Verify results**:
    - If VERDICT=PASS: Output success summary with test counts, commit list, and readiness for `/gsd-ship`
    - If VERDICT=FAIL: Output failure report with:
      - Which tests failed
      - Which tasks are incomplete
      - Recommended next steps (run `/gsd-sp-review` to identify issues, or re-execute with `--debug`)
 
-6. **Clean up worktree**: Record the original directory before step 2. After execution, return and remove the worktree. If the worktree has uncommitted changes (agent failed mid-task), stash them before removal:
+7. **Clean up worktree**: Record the original directory before step 2. After execution, return and remove the worktree. If the worktree has uncommitted changes (agent failed mid-task), stash them before removal:
    ```bash
    cd $ORIGINAL_DIR
    git worktree remove .worktrees/phase-<N> --force || true
