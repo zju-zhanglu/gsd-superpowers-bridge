@@ -48,7 +48,7 @@ Two new commands that wrap native GSD commands with Superpowers quality gates:
 
 ```bash
 # Clone into your Claude Code plugins directory
-git clone https://github.com/<you>/gsd-superpowers-bridge ~/.claude/plugins/gsd-superpowers-bridge
+git clone https://github.com/gsd-superpowers-bridge/gsd-superpowers-bridge ~/.claude/plugins/gsd-superpowers-bridge
 
 # Or install via plugin manager (when published)
 # /plugin install gsd-superpowers-bridge
