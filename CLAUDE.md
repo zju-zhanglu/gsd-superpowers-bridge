@@ -2,8 +2,8 @@
 
 ## Commands
 
-- `/gsd-sp-execute [N]` — Execute phase N with TDD and quality gates
-- `/gsd-sp-review [N]` — Dual-layer review (GSD + Superpowers)
+- `/gsd-sp-execute [N]` — Execute phase N with TDD and quality gates. Example: `/gsd-sp-execute 3` runs phase 3 with TDD enforced. Outputs pass/fail verdict with test results and commit summary.
+- `/gsd-sp-review [N]` — Dual-layer review (GSD + Superpowers). Example: `/gsd-sp-review 3` runs both reviewers and outputs a merged report with CRITICAL/STANDARD issues and a BLOCKED/READY verdict.
 
 ## Prerequisites
 
