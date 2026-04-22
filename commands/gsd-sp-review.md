@@ -38,22 +38,28 @@ Before reviewing, verify:
 </prerequisites>
 
 <execution>
-Phase: Parse `$ARGUMENTS` to extract phase number N (first positional token).
+Phase: Parse `$ARGUMENTS` to extract phase number N (first positional token). If no valid phase number is provided, abort with: "Usage: /gsd-sp-review <phase-number>". Verify the phase exists in `.planning/ROADMAP.md` — if not found, abort with available phases list.
 
-1. **Read phase spec**: Load phase N plan and list of changed files from git diff against the base branch.
+1. **Read phase spec**: Load phase N plan from `.planning/`. Get the list of changed files since the phase branch was created:
+   ```bash
+   git diff --name-only main..phase-<N>
+   ```
+   If no files changed, abort with: "Phase N has no code changes to review."
 
-2. **Run GSD review**: Invoke GSD's `/gsd-review` command for the cross-AI peer review. Collect the review output.
+2. **Run GSD review**: Read the `commands/gsd/review.md` file from the GSD plugin (located in `~/.claude/skills/` or equivalent). Follow its instructions to perform the cross-AI peer review on the changed files. Capture the full review output. If the GSD review command file does not exist, note "GSD review unavailable — proceeding with Superpowers review only" and set the GSD review output to empty.
 
-3. **Run Superpowers review**: Spawn the `code-reviewer` agent with:
-   - Phase plan as the reference document
-   - Changed files as the review target
+3. **Run Superpowers review**: Use the `Task` tool to dispatch a subagent. Load the full content of `agents/code-reviewer.md` (from the Superpowers plugin at `~/.claude/skills/agents/code-reviewer.md` or equivalent) and pass it as the agent prompt. Provide:
+   - The phase plan as the reference document
+   - The changed files as the review target
    - Instructions to review against plan alignment, code quality, architecture, and security
+   Set a timeout of 15 minutes for the subagent. If the agent times out or fails, note "Superpowers review unavailable — proceeding with GSD review only" and set the SP review output to empty.
 
-4. **Merge review outputs**: Parse both review outputs and categorize:
-   - **CRITICAL**: Issues flagged by BOTH reviewers (same file:line or same logical issue)
-   - **STANDARD**: Issues flagged by only one reviewer
+4. **Merge review outputs**: If both reviewers are available, parse both outputs and categorize by matching file:line references:
+   - **CRITICAL**: Issues flagged by BOTH reviewers at the same file:line
+   - **STANDARD**: Issues flagged by only one reviewer, or matching issues at different lines in the same file
+   If only one reviewer ran (the other was unavailable), all issues are STANDARD.
 
-5. **Generate report**: Write `REVIEW-<N>.md` in the `.planning/` directory with the merged output.
+5. **Generate report**: Ensure `.planning/` exists, then write `REVIEW-<N>.md` with the merged output. If the file already exists (re-run), overwrite it and note the previous version was replaced.
 
 6. **Determine verdict**:
    - If any CRITICAL issues → VERDICT: BLOCKED. Suggest specific fixes for each critical issue.
