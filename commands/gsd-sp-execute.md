@@ -1,7 +1,7 @@
 ---
 name: gsd:sp-execute
 description: Execute a phase with Superpowers quality gates (TDD, systematic debugging, verification)
-argument-hint: "<phase-number> [--tdd] [--debug] [--verify]"
+argument-hint: "<phase-number> [--no-tdd] [--debug] [--verify]"
 allowed-tools:
   - Read
   - Write
@@ -47,15 +47,16 @@ Before executing, verify:
 </prerequisites>
 
 <execution>
-Phase: $ARGUMENTS
+Phase: Parse `$ARGUMENTS` to extract phase number N (first positional token). Ignore documented flags (`--no-tdd`, `--debug`, `--verify`) — they modify behavior but do not change the phase target.
 
 1. **Read phase spec**: Load the phase N plan file from `.planning/` directory. Extract:
    - Task list with file paths
    - Verification criteria
    - Dependencies between tasks
 
-2. **Create worktree**: Use Superpowers' git worktree isolation. Create a fresh branch for this phase:
+2. **Create worktree**: Use git worktree isolation. Ensure `.worktrees/` exists, then create a fresh branch:
    ```bash
+   mkdir -p .worktrees
    git worktree add .worktrees/phase-<N> -b phase-<N>
    cd .worktrees/phase-<N>
    ```
@@ -78,14 +79,14 @@ Phase: $ARGUMENTS
      - Which tasks are incomplete
      - Recommended next steps (run `/gsd-sp-review` to identify issues, or re-execute with `--debug`)
 
-6. **Clean up worktree**:
+6. **Clean up worktree**: Record the original directory before step 2. After execution, return and remove the worktree. If the worktree has uncommitted changes (agent failed mid-task), stash them before removal:
    ```bash
    cd $ORIGINAL_DIR
-   git worktree remove .worktrees/phase-<N>
+   git worktree remove .worktrees/phase-<N> --force || true
    ```
 
 Flag behavior:
-- `--tdd` (default): Enforce TDD workflow. Active unless explicitly disabled.
+- `--no-tdd`: Disable TDD enforcement. Default is TDD enforced.
 - `--debug`: Enable verbose debugging output during execution.
 - `--verify`: Run verification-before-completion gate even if tests pass.
 </execution>
