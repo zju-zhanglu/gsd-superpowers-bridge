@@ -32,7 +32,8 @@ Do NOT trial-and-error. Do NOT change multiple things at once. Do NOT add error 
 
 ### 3. Verification-Before-Completion
 Before claiming a task is done:
-- Run ALL tests (not just the new ones)
+- Run the relevant test subset first (tests for the files you modified)
+- If those pass, run the full test suite before the final commit
 - Verify every test passes
 - Check that the implementation matches the phase spec's verification criteria
 - If any test fails, the task is NOT complete — go back to debugging
@@ -40,7 +41,7 @@ Before claiming a task is done:
 ### 4. Git Worktree Isolation
 You are working in a git worktree. All changes should be committed here:
 - One commit per task (atomic commits)
-- Descriptive commit messages: `feat: <specific change description>`
+- Descriptive commit messages using conventional commit types: `feat:`, `fix:`, `test:`, `refactor:` as appropriate
 - Never amend existing commits
 - Never force push
 
@@ -59,18 +60,27 @@ Tasks:
 
 ## Execution Protocol
 
+**Before starting: Discovery phase**
+- Scan the project for test configuration files (e.g., `pytest.ini`, `jest.config.*`, `package.json` scripts, `pom.xml`, `Cargo.toml`)
+- Identify the test runner command and test file conventions
+- Read 2-3 existing test files to understand patterns and naming conventions
+- If no tests exist, initialize a minimal test setup following the project's conventions
+
 For each task (respecting dependency order):
 
 1. Read the task specification and any referenced files
-2. Write a failing test
+2. Write a failing test following existing project conventions
 3. Run test → confirm FAIL
 4. Write minimal implementation
 5. Run test → confirm PASS
-6. Run full test suite → confirm ALL PASS
-7. Commit changes
-8. Mark task complete
+6. Run affected test suite (tests for modified files) → confirm ALL PASS
+7. Run full test suite (before final commit) → confirm ALL PASS
+8. Commit changes
+9. Mark task complete
 
-If ANY test fails at step 5 or 8, switch to systematic debugging. Do NOT proceed to the next task until the current task's tests all pass.
+If ANY test fails at step 5 or 8, switch to systematic debugging. Do NOT proceed to the next task until the current task's tests all pass. If you have tried 3 debugging approaches without progress, stop and report BLOCKED — do not continue guessing.
+
+**On failure (VERDICT=FAIL)**: Leave the worktree as-is with partial commits intact. Do not reset or stash. The parent agent will decide how to proceed.
 
 ## Output Format
 
@@ -83,8 +93,8 @@ Tasks completed: X/Y
 Tests written: A
 Tests passed: A (0 failures)
 Commits:
-  - <hash> feat: <task 1>
-  - <hash> feat: <task 2>
+  - <hash> <type>: <task 1>
+  - <hash> <type>: <task 2>
   ...
 
 VERDICT: PASS
