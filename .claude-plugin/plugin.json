@@ -1,0 +1,17 @@
+{
+  "name": "gsd-superpowers-bridge",
+  "description": "Bridge plugin combining GSD project lifecycle with Superpowers execution discipline: TDD, systematic debugging, verification, and two-stage code review",
+  "version": "0.1.0",
+  "author": {
+    "name": "张露"
+  },
+  "license": "MIT",
+  "keywords": [
+    "gsd",
+    "superpowers",
+    "tdd",
+    "debugging",
+    "code-review",
+    "verification"
+  ]
+}
