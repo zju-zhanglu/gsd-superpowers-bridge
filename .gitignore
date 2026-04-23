@@ -1,0 +1,7 @@
+.vscode/
+.claude/
+.cursor/
+.DS_Store
+.worktrees/
+node_modules/
+.planning/
